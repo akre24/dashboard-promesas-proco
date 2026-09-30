@@ -210,8 +210,10 @@ const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 
 const MORA_ORDER=['Mora 0','Mora 1','Mora 2','Mora 3','Mora 4','Mora 5','Mora 6','Mora 7','Sin mora'];
 
+const norm=s=>(''+s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
 function findKey(obj, substr){
-  return Object.keys(obj).find(k=>k.toLowerCase().includes(substr));
+  const t=norm(substr);
+  return Object.keys(obj).find(k=>norm(k).includes(t));
 }
 function toISO(d){
   if(!d) return '';
@@ -395,7 +397,9 @@ function loadData(){
       const rows=res.data.map(normalizeCsvRow).filter(r=>r && r.a);
       if(!rows.length) throw new Error('sin filas');
       ROWS=rows;
-      setStatus(true,'Conectado · '+ROWS.length+' registros');
+      const f=(res.meta&&res.meta.fields)||[];
+      const miss=[]; if(!f.some(k=>norm(k).includes('pagosmx'))) miss.push('Pagos MX'); if(!f.some(k=>norm(k).includes('montoapagarmx'))) miss.push('Monto a Pagar MX');
+      setStatus(true,'Conectado · '+ROWS.length+' registros'+(miss.length?' · ⚠ no se encontró: '+miss.join(', '):''));
       populateSelects(); render();
     }catch(e){
       setStatus(false,ROWS.length?'Error al actualizar — mostrando últimos datos':'No se pudo leer el Sheet');
