@@ -225,8 +225,13 @@ function toISO(d){
 }
 function parseNum(v){
   if(v===undefined||v===null) return 0;
-  let s=(''+v).trim().replace(/\s/g,'');
-  if(!s) return 0;
+  let s=(''+v).trim().replace(/[$\s]/g,'');
+  if(!s||s==='-') return 0;
+  if(s.includes(',')&&s.includes('.')){
+    // el último separador es el decimal
+    s = s.lastIndexOf(',')>s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
+    return Number(s)||0;
+  }
   s=s.replace(',', '.');
   const parts=s.split('.');
   if(parts.length<=1) return Number(s)||0;
@@ -240,7 +245,8 @@ function normalizeCsvRow(r){
   const area=(r['Area']||'').trim();
   if(area && !area.startsWith('Proco')) return null;
   const kClasif=findKey(r,'clasificaci');
-  const kMonto=findKey(r,'monto a pagar');
+  const kMonto=findKey(r,'monto a pagar mx')||findKey(r,'monto a pagar');
+  const kPagos=findKey(r,'pagos mx')||'Pagos';
   return {
     g:toISO((r['Fecha_gestion']||'').trim()),
     mf:toISO((r['Max_fecha_pago']||'').trim()),
@@ -253,7 +259,7 @@ function normalizeCsvRow(r){
     co:val.startsWith('Correcta'),
     e:(r['Efectiva']||'').trim().toLowerCase()==='si',
     mp:kMonto?parseNum(r[kMonto]):0,
-    mr:parseNum(r['Pagos'])
+    mr:parseNum(r[kPagos])
   };
 }
 
