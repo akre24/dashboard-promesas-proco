@@ -159,7 +159,7 @@
     <div class="eyebrow">ASESORES</div>
     <h2>Resultados por asesor</h2>
     <div class="tablewrap"><table>
-      <thead><tr><th>Asesor</th><th class="num">Promesas</th><th class="num">Correctas</th><th class="num">Incorrectas</th><th class="num">Efectivas</th><th class="num">% Efect.</th><th class="num">Monto</th></tr></thead>
+      <thead><tr><th>Asesor</th><th class="num">Promesas</th><th class="num">Correctas</th><th class="num">Incorrectas</th><th class="num">Efectivas</th><th class="num">% Efect.</th><th class="num">Monto comprometido</th><th class="num">Monto recuperado</th></tr></thead>
       <tbody id="tblAsesor"></tbody>
     </table></div>
   </div>
@@ -352,9 +352,9 @@ const pillClass=(e,p)=> e/p>=.55?'good':(e/p<.4?'bad':'mid');
 
 function renderAsesorTable(rows){
   const by={};
-  rows.forEach(r=>{ if(!r.a) return; if(!by[r.a]) by[r.a]={p:0,c:0,e:0,mr:0}; const x=by[r.a]; x.p++; if(r.co)x.c++; if(r.e)x.e++; x.mr+=r.mr; });
+  rows.forEach(r=>{ if(!r.a) return; if(!by[r.a]) by[r.a]={p:0,c:0,e:0,mp:0,mr:0}; const x=by[r.a]; x.p++; if(r.co)x.c++; if(r.e)x.e++; x.mp+=r.mp; x.mr+=r.mr; });
   const list=Object.entries(by).map(([a,x])=>({a,...x,i:x.p-x.c})).sort((m,n)=>n.p-m.p);
-  $('#tblAsesor').innerHTML=list.map(x=>`<tr><td>${x.a}</td><td class="num">${fmtInt(x.p)}</td><td class="num">${fmtInt(x.c)}</td><td class="num">${fmtInt(x.i)}</td><td class="num">${fmtInt(x.e)}</td><td class="num"><span class="pill ${pillClass(x.e,x.p)}">${pct(x.e,x.p)}</span></td><td class="num">${fmtMoney(x.mr)}</td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--ink-faint);padding:20px;">Sin datos para este filtro</td></tr>';
+  $('#tblAsesor').innerHTML=list.map(x=>`<tr><td>${x.a}</td><td class="num">${fmtInt(x.p)}</td><td class="num">${fmtInt(x.c)}</td><td class="num">${fmtInt(x.i)}</td><td class="num">${fmtInt(x.e)}</td><td class="num"><span class="pill ${pillClass(x.e,x.p)}">${pct(x.e,x.p)}</span></td><td class="num">${fmtMoney(x.mp)}</td><td class="num">${fmtMoney(x.mr)}</td></tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-faint);padding:20px;">Sin datos para este filtro</td></tr>';
 }
 
 function renderContactoTable(rows){
