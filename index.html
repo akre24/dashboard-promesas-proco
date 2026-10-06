@@ -229,17 +229,27 @@ function parseNum(v){
   if(v===undefined||v===null) return 0;
   let s=(''+v).trim().replace(/[$\s]/g,'');
   if(!s||s==='-') return 0;
-  if(s.includes(',')&&s.includes('.')){
-    // el último separador es el decimal
-    s = s.lastIndexOf(',')>s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
-    return Number(s)||0;
+  const neg=s.startsWith('-');
+  s=s.replace(/^-/,'');
+  const nDot=(s.match(/\./g)||[]).length;
+  const nCom=(s.match(/,/g)||[]).length;
+
+  if(nDot&&nCom){
+    // el último separador que aparece es el decimal
+    s = s.lastIndexOf(',')>s.lastIndexOf('.')
+      ? s.replace(/\./g,'').replace(',','.')   // 1.234,56
+      : s.replace(/,/g,'');                    // 1,234.56
+  } else if(nCom>1){
+    s=s.replace(/,/g,'');                      // 1,234,567 (miles)
+  } else if(nDot>1){
+    s=s.replace(/\./g,'');                     // 1.234.567 (miles)
+  } else if(nCom===1){
+    s=s.replace(',','.');                      // 1234,56 o 1234,5678 (decimal)
   }
-  s=s.replace(',', '.');
-  const parts=s.split('.');
-  if(parts.length<=1) return Number(s)||0;
-  const last=parts[parts.length-1];
-  if(parts.length===2 && last.length<=2) return Number(s)||0;
-  return Number(parts.join(''))||0;
+  // un solo punto: ya es decimal, se deja igual
+
+  const n=Number(s);
+  return isNaN(n)?0:(neg?-n:n);
 }
 
 function normalizeCsvRow(r){
