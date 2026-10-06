@@ -178,7 +178,7 @@
     <h2>Comportamiento por fecha</h2>
     <div class="legend inline"><span><i class="good"></i>Correcta</span><span><i class="bad"></i>Incorrecta</span><span><i class="eff"></i>Efectiva</span></div>
     <div class="tablewrap"><table>
-      <thead><tr><th>Fecha</th><th class="num">Promesas</th><th class="num">Correctas</th><th class="num">Incorrectas</th><th class="num">Efectivas</th><th class="num">No efectivas</th><th class="num">% Efect.</th><th class="num">Monto</th></tr></thead>
+      <thead><tr><th>Fecha</th><th class="num">Promesas</th><th class="num">Correctas</th><th class="num">Incorrectas</th><th class="num">Efectivas</th><th class="num">No efectivas</th><th class="num">% Efect.</th><th class="num">Monto comprometido</th><th class="num">Monto recuperado</th></tr></thead>
       <tbody id="tblFecha"></tbody>
     </table></div>
   </div>
@@ -265,7 +265,8 @@ function normalizeCsvRow(r){
   return {
     g:toISO((r['Fecha_gestion']||'').trim()),
     mf:toISO((r['Max_fecha_pago']||'').trim()),
-    a:(r['Nombre Corto']||r['Agente que promesa']||'').trim(),
+    a:(r['Nombre Corto']||'').trim(),
+    af:(r['Agente que promesa']||'').trim(),
     s:(r['Supervisor']||'').trim()||'Sin asignar',
     t:(r['Tipo de contacto']||'').trim(),
     c:kClasif?(r[kClasif]||'').trim():'',
@@ -380,9 +381,9 @@ function renderContactoTable(rows){
 
 function renderFechaTable(rows){
   const by={};
-  rows.forEach(r=>{ if(!r.g) return; if(!by[r.g]) by[r.g]={p:0,c:0,e:0,mr:0}; const x=by[r.g]; x.p++; if(r.co)x.c++; if(r.e)x.e++; x.mr+=r.mr; });
+  rows.forEach(r=>{ if(!r.g) return; if(!by[r.g]) by[r.g]={p:0,c:0,e:0,mp:0,mr:0}; const x=by[r.g]; x.p++; if(r.co)x.c++; if(r.e)x.e++; x.mp+=r.mp; x.mr+=r.mr; });
   const list=Object.entries(by).map(([g,x])=>({g,...x,i:x.p-x.c,ne:x.p-x.e})).sort((m,n)=>n.g.localeCompare(m.g));
-  $('#tblFecha').innerHTML=list.map(x=>`<tr><td>${x.g}</td><td class="num">${fmtInt(x.p)}</td><td class="num">${fmtInt(x.c)}</td><td class="num">${fmtInt(x.i)}</td><td class="num">${fmtInt(x.e)}</td><td class="num">${fmtInt(x.ne)}</td><td class="num"><span class="pill ${pillClass(x.e,x.p)}">${pct(x.e,x.p)}</span></td><td class="num">${fmtMoney(x.mr)}</td></tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--ink-faint);padding:20px;">Sin datos para este filtro</td></tr>';
+  $('#tblFecha').innerHTML=list.map(x=>`<tr><td>${x.g}</td><td class="num">${fmtInt(x.p)}</td><td class="num">${fmtInt(x.c)}</td><td class="num">${fmtInt(x.i)}</td><td class="num">${fmtInt(x.e)}</td><td class="num">${fmtInt(x.ne)}</td><td class="num"><span class="pill ${pillClass(x.e,x.p)}">${pct(x.e,x.p)}</span></td><td class="num">${fmtMoney(x.mp)}</td><td class="num">${fmtMoney(x.mr)}</td></tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--ink-faint);padding:20px;">Sin datos para este filtro</td></tr>';
 }
 
 function renderEstado(rows){
@@ -408,7 +409,10 @@ function loadData(){
   Papa.parse(SHEET_URL+'&t='+Date.now(),{download:true,header:true,skipEmptyLines:true,complete:res=>{
     try{
       if(!res.data||!res.data.length) throw new Error('vacío');
-      const rows=res.data.map(normalizeCsvRow).filter(r=>r && r.a);
+      const parsed=res.data.map(normalizeCsvRow).filter(Boolean);
+      const alias={};
+      parsed.forEach(r=>{ if(r.a && r.af) alias[r.af]=r.a; });
+      const rows=parsed.map(r=>({...r, a:r.a||alias[r.af]||r.af})).filter(r=>r.a);
       if(!rows.length) throw new Error('sin filas');
       ROWS=rows;
       const f=(res.meta&&res.meta.fields)||[];
