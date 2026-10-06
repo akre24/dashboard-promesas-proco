@@ -122,7 +122,7 @@
       <label>Desde<input type="date" id="fDesde"></label>
       <label>Hasta<input type="date" id="fHasta"></label>
       <label>Asesor<select id="fAsesor"><option value="">Todos</option></select></label>
-      <label>Tipo de contacto<select id="fTipo"><option value="">Todos</option></select></label>
+      <label>Clasificación<select id="fTipo"><option value="">Todos</option></select></label>
       <label>Supervisor<select id="fSup"><option value="">Todos</option></select></label>
       <label>Banner<input type="text" id="fBanner" placeholder="Buscar banner…"></label>
     </div>
@@ -225,6 +225,9 @@ function toISO(d){
   if(m){ return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); }
   return d;
 }
+
+// Un solo separador (coma o punto) siempre se toma como decimal.
+// Solo es separador de miles cuando se repite o cuando vienen coma y punto juntos.
 function parseNum(v){
   if(v===undefined||v===null) return 0;
   let s=(''+v).trim().replace(/[$\s]/g,'');
@@ -279,7 +282,8 @@ function populateSelects(){
   const uniq=(k)=>[...new Set(ROWS.map(r=>r[k]).filter(Boolean))].sort();
   const fill=(sel,vals)=>{const cur=sel.value; sel.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option value="${v}">${v}</option>`).join(''); if(vals.includes(cur)) sel.value=cur;};
   fill($('#fAsesor'), uniq('a'));
-  fill($('#fTipo'), uniq('t'));
+  // Clasificación (mismos valores que la tabla "Tipo de contacto")
+  fill($('#fTipo'), [...new Set(ROWS.map(r=>r.c||'Sin clasificar'))].sort());
   fill($('#fSup'), uniq('s'));
   const prevMoras=[...$('#fMora').selectedOptions].map(o=>o.value);
   const moras=uniq('m').sort((a,b)=>{const ia=MORA_ORDER.indexOf(a),ib=MORA_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib);});
@@ -300,7 +304,7 @@ function applyFilters(){
   const f=getFilters();
   return ROWS.filter(r=>
     (!f.desde || r.g>=f.desde) && (!f.hasta || r.g<=f.hasta) &&
-    (!f.asesor || r.a===f.asesor) && (!f.tipo || r.t===f.tipo) && (!f.sup || r.s===f.sup) &&
+    (!f.asesor || r.a===f.asesor) && (!f.tipo || (r.c||'Sin clasificar')===f.tipo) && (!f.sup || r.s===f.sup) &&
     (!f.banner || r.bn.toLowerCase().includes(f.banner)) &&
     (!f.moras.length || f.moras.includes(r.m))
   );
